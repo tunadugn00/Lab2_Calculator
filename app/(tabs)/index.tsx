@@ -54,7 +54,7 @@ export default function App() {
           } else if (buttonPressed === '=') {
               calculateResult();
               setIsNewCalculation(true);
-              return newValue; // Để tránh xóa kết quả ngay lập tức
+              return newValue; 
           }
   
           return removeLeadingZeros(newValue);
@@ -69,18 +69,15 @@ export default function App() {
       try {
           let expression = currentNumber.replace('x', '*').replace('÷', '/');
           
-          // xử lý phép tính có chứa dấu %
           if (expression.includes('%')) {
               let parts = expression.split(/([+\-*/])/);
               for (let i = 0; i < parts.length; i++) {
                   if (parts[i].endsWith('%')) {
                       let num = parseFloat(parts[i].slice(0, -1));
                       if (i > 0 && ['+', '-'].includes(parts[i-1])) {
-                          // Trường hợp cộng/trừ phần trăm
                           let baseNum = eval(parts.slice(0, i-1).join(''));
                           parts[i] = (baseNum * num / 100).toString();
                       } else {
-                          // Trường hợp nhân/chia với phần trăm
                           parts[i] = (num / 100).toString();
                       }
                   }
