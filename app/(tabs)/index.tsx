@@ -32,7 +32,6 @@ export default function App() {
                     setIsNewCalculation(false);
                 } else {
                     if (buttonPressed === '.') {
-                        // Kiểm tra xem số cuối cùng đã có dấu chấm chưa
                         const parts = newValue.split(/[+\-x÷]/);
                         const lastPart = parts[parts.length - 1];
                         if (lastPart.includes('.')) {
@@ -93,7 +92,6 @@ export default function App() {
             let result = eval(expression);
             if (!isNaN(result) && isFinite(result)) {
                 setPreviousExpression(`${currentNumber} =`);
-                // Làm tròn kết quả đến 10 chữ số thập phân và loại bỏ số 0 thừa
                 setCurrentNumber(Number(result.toFixed(10)).toString());
             } else {
                 throw new Error('Invalid result');
