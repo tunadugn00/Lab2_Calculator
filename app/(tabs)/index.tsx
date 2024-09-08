@@ -17,86 +17,92 @@ export default function App() {
         ['.', '0', '=',]
     ];
 
-    const handleInput = useCallback((buttonPressed : string) => {
-      if (buttonPressed === 'theme') {
-          setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
-          return;
-      }
-  
-      setCurrentNumber(prev => {
-          let newValue = prev;
-  
-          if (!isNaN(buttonPressed) || buttonPressed === '.') {
-              if (isNewCalculation) {
-                  newValue = buttonPressed;
-                  setIsNewCalculation(false);
-              } else {
-                  if (buttonPressed === '.' && newValue.includes('.')) {
-                      return newValue;
-                  }
-                  if (newValue === '0' && buttonPressed !== '.') {
-                      return buttonPressed;
-                  }
-                  newValue = newValue + buttonPressed;
-              }
-          } else if (['x', '÷', '+', '-', '%'].includes(buttonPressed)) {
-              setIsNewCalculation(false);
-              if (['x', '÷', '+', '-', '%'].includes(newValue.slice(-1))) {
-                  return newValue.slice(0, -1) + buttonPressed;
-              }
-              newValue = newValue + buttonPressed;
-          } else if (buttonPressed === 'C') {
-              newValue = '';
-              setPreviousExpression('');
-              setIsNewCalculation(true);
-          } else if (buttonPressed === 'DEL') {
-              newValue = removeLeadingZeros(newValue.slice(0, -1));
-          } else if (buttonPressed === '=') {
-              calculateResult();
-              setIsNewCalculation(true);
-              return newValue; 
-          }
-  
-          return removeLeadingZeros(newValue);
-      });
-  }, [currentNumber, isNewCalculation]);
+    const handleInput = useCallback((buttonPressed: string) => {
+        if (buttonPressed === 'theme') {
+            setTheme(prevTheme => prevTheme === 'light' ? 'dark' : 'light');
+            return;
+        }
+
+        setCurrentNumber(prev => {
+            let newValue = prev;
+
+            if (!isNaN(Number(buttonPressed)) || buttonPressed === '.') {
+                if (isNewCalculation) {
+                    newValue = buttonPressed;
+                    setIsNewCalculation(false);
+                } else {
+                    if (buttonPressed === '.') {
+                        // Kiểm tra xem số cuối cùng đã có dấu chấm chưa
+                        const parts = newValue.split(/[+\-x÷]/);
+                        const lastPart = parts[parts.length - 1];
+                        if (lastPart.includes('.')) {
+                            return newValue;
+                        }
+                    }
+                    if (newValue === '0' && buttonPressed !== '.') {
+                        return buttonPressed;
+                    }
+                    newValue = newValue + buttonPressed;
+                }
+            } else if (['x', '÷', '+', '-', '%'].includes(buttonPressed)) {
+                setIsNewCalculation(false);
+                if (['x', '÷', '+', '-', '%'].includes(newValue.slice(-1))) {
+                    return newValue.slice(0, -1) + buttonPressed;
+                }
+                newValue = newValue + buttonPressed;
+            } else if (buttonPressed === 'C') {
+                newValue = '';
+                setPreviousExpression('');
+                setIsNewCalculation(true);
+            } else if (buttonPressed === 'DEL') {
+                newValue = removeLeadingZeros(newValue.slice(0, -1));
+            } else if (buttonPressed === '=') {
+                calculateResult();
+                setIsNewCalculation(true);
+                return newValue;
+            }
+
+            return removeLeadingZeros(newValue);
+        });
+    }, [currentNumber, isNewCalculation]);
 
     const removeLeadingZeros = (value : string) => {
       return value.replace(/^0+(?!\.)/, '') || '0';
     };
 
     const calculateResult = () => {
-      try {
-          let expression = currentNumber.replace('x', '*').replace('÷', '/');
-          
-          if (expression.includes('%')) {
-              let parts = expression.split(/([+\-*/])/);
-              for (let i = 0; i < parts.length; i++) {
-                  if (parts[i].endsWith('%')) {
-                      let num = parseFloat(parts[i].slice(0, -1));
-                      if (i > 0 && ['+', '-'].includes(parts[i-1])) {
-                          let baseNum = eval(parts.slice(0, i-1).join(''));
-                          parts[i] = (baseNum * num / 100).toString();
-                      } else {
-                          parts[i] = (num / 100).toString();
-                      }
-                  }
-              }
-              expression = parts.join('');
-          }
+        try {
+            let expression = currentNumber.replace(/x/g, '*').replace(/÷/g, '/');
+            
+            if (expression.includes('%')) {
+                let parts = expression.split(/([+\-*/])/);
+                for (let i = 0; i < parts.length; i++) {
+                    if (parts[i].endsWith('%')) {
+                        let num = parseFloat(parts[i].slice(0, -1));
+                        if (i > 0 && ['+', '-'].includes(parts[i-1])) {
+                            let baseNum = eval(parts.slice(0, i-1).join(''));
+                            parts[i] = (baseNum * num / 100).toString();
+                        } else {
+                            parts[i] = (num / 100).toString();
+                        }
+                    }
+                }
+                expression = parts.join('');
+            }
 
-          let result = eval(expression);
-          if (!isNaN(result) && isFinite(result)) {
-              setPreviousExpression(`${currentNumber} =`);
-              setCurrentNumber(result.toString());
-          } else {
-              throw new Error('Invalid result');
-          }
-      } catch {
-          Vibration.vibrate();
-          setCurrentNumber('Error');
-      }
-  };
+            let result = eval(expression);
+            if (!isNaN(result) && isFinite(result)) {
+                setPreviousExpression(`${currentNumber} =`);
+                // Làm tròn kết quả đến 10 chữ số thập phân và loại bỏ số 0 thừa
+                setCurrentNumber(Number(result.toFixed(10)).toString());
+            } else {
+                throw new Error('Invalid result');
+            }
+        } catch {
+            Vibration.vibrate();
+            setCurrentNumber('Error');
+        }
+    };
 
     const buttonStyle = (button : string) => {
       if (['x', '÷', '+', '-', '%', 'C', 'DEL'].includes(button)) {
